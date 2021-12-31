@@ -8,6 +8,7 @@ import {Switch} from '../switch'
 // 📜 https://reactjs.org/docs/context.html#reactcreatecontext
 
 const ToggleContext = React.createContext()
+ToggleContext.displayName = 'ToggleContext'
 
 function Toggle({children}) {
   const [on, setOn] = React.useState(false)
@@ -25,9 +26,9 @@ function Toggle({children}) {
 function useToggle() {
   const context = React.useContext(ToggleContext)
   if (!context) {
-    throw new Error('useToggle must be called inside a ToggleContext')
+    throw new Error("useToggle must be called inside a ToggleContext")
   }
-  return context
+  return context;
 }
 
 // 🐨 we'll still get the children from props (as it's passed to us by the
