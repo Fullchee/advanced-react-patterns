@@ -36,6 +36,9 @@ function useControlledSwitchWarning({isControlled, componentName, propName}) {
   // 2. Passing a value for `on` and later passing `undefined` or `null`
   // 3. Passing `undefined` or `null` for `on` and later passing a value
   React.useEffect(() => {
+    if (process.env.NODE_ENV === 'production') {
+      return
+    }
     const initialStateName = wasControlled ? 'controlled' : 'uncontrolled'
     const endStateName = wasControlled ? 'uncontrolled' : 'controlled'
     warning(
@@ -47,8 +50,12 @@ function useControlledSwitchWarning({isControlled, componentName, propName}) {
 }
 
 function useReadOnlyWarning({onChange, readOnly, isControlled}) {
+  // use this bool or a useCallback so that the useEffect doesn't get called every render
   const hasOnChange = Boolean(onChange)
   React.useEffect(() => {
+    if (process.env.NODE_ENV === 'production') {
+      return
+    }
     warning(
       !(!hasOnChange && isControlled && !readOnly),
       'Warning: Failed prop type: You provided a `on` prop to a form field without an `onChange` handler. This will render a read-only field. If the field should be mutable use `defaultValue`. Otherwise, set either `onChange` or `readOnly`.',
@@ -67,14 +74,17 @@ function useToggle({
   const [state, dispatch] = React.useReducer(reducer, initialState)
   const isControlled = controlledOn != null
   const on = isControlled ? controlledOn : state.on
-  // use this bool or a useCallback so that the useEffect doesn't get called every render
 
-  useControlledSwitchWarning({
-    isControlled,
-    componentName: 'useToggle',
-    propName: 'on',
-  })
-  useReadOnlyWarning({onChange, readOnly, isControlled})
+  if (process.env.NODE_ENV !== 'production') {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    useControlledSwitchWarning({
+      isControlled,
+      componentName: 'useToggle',
+      propName: 'on',
+    })
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    useReadOnlyWarning({onChange, readOnly, isControlled})
+  }
 
   function dispatchWithOnChange(action) {
     if (!isControlled) {
