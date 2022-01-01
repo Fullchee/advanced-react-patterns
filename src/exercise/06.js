@@ -40,9 +40,10 @@ function useToggle({
   const [state, dispatch] = React.useReducer(reducer, initialState)
   const isControlled = controlledOn != null
   const on = isControlled ? controlledOn : state.on
-  const onOldValueRef = React.useRef()
   // use this bool or a useCallback so that the useEffect doesn't get called every render
   const hasOnChange = Boolean(onChange)
+  // we only care about the initial value, no need to set the value again
+  const {current: wasControlled} = React.useRef(isControlled)
 
   React.useEffect(() => {
     warning(
@@ -53,10 +54,15 @@ function useToggle({
 
   // 2. Passing a value for `on` and later passing `undefined` or `null`
   // 3. Passing `undefined` or `null` for `on` and later passing a value
-  // React.useEffect(() => {
-  //   warning()
-  //   return () => {}
-  // }, [on])
+  React.useEffect(() => {
+    const initialStateName = wasControlled ? 'controlled' : 'uncontrolled'
+    const endStateName = wasControlled ? 'uncontrolled' : 'controlled'
+    warning(
+      !((!wasControlled && isControlled) || (wasControlled && !isControlled)),
+      `Warning: A component is changing a ${initialStateName} input of type undefined to be ${endStateName}. Input elements should not switch from ${initialStateName} to ${endStateName} (or vice versa). Decide between using a ${initialStateName} or ${endStateName} input element for the lifetime of the component. More info: https://fb.me/react-controlled-components`,
+    )
+    return () => {}
+  }, [isControlled, wasControlled])
 
   function dispatchWithOnChange(action) {
     if (!isControlled) {
@@ -116,14 +122,14 @@ function App() {
   }
 
   function handleResetClick() {
-    setBothOn(false)
+    setBothOn(null)
     setTimesClicked(0)
   }
 
   return (
     <div>
       <div>
-        <Toggle on={bothOn} readOnly={true} />
+        <Toggle on={bothOn} onChange={handleToggleChange} />
         <Toggle on={bothOn} onChange={handleToggleChange} />
       </div>
       {timesClicked > 4 ? (
