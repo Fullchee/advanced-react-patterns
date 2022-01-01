@@ -47,9 +47,8 @@ function useToggle({
   React.useEffect(() => {
     warning(
       !(!hasOnChange && isControlled && !readOnly),
-      'On was provided a value but there is no onChange',
+      'Warning: Failed prop type: You provided a `on` prop to a form field without an `onChange` handler. This will render a read-only field. If the field should be mutable use `defaultValue`. Otherwise, set either `onChange` or `readOnly`.',
     )
-    return () => {}
   }, [hasOnChange, isControlled, readOnly])
 
   // 2. Passing a value for `on` and later passing `undefined` or `null`
@@ -125,7 +124,7 @@ function App() {
     <div>
       <div>
         <Toggle on={bothOn} readOnly={true} />
-        {/* <Toggle on={bothOn} onChange={handleToggleChange} /> */}
+        <Toggle on={bothOn} onChange={handleToggleChange} />
       </div>
       {timesClicked > 4 ? (
         <div data-testid="notice">
