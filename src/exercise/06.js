@@ -29,6 +29,23 @@ function toggleReducer(state, {type, initialState}) {
   }
 }
 
+function useControlledSwitchWarning({isControlled, componentName, propName}) {
+  // we only care about the initial value, no need to set the value again
+  const {current: wasControlled} = React.useRef(isControlled)
+
+  // 2. Passing a value for `on` and later passing `undefined` or `null`
+  // 3. Passing `undefined` or `null` for `on` and later passing a value
+  React.useEffect(() => {
+    const initialStateName = wasControlled ? 'controlled' : 'uncontrolled'
+    const endStateName = wasControlled ? 'uncontrolled' : 'controlled'
+    warning(
+      !((!wasControlled && isControlled) || (wasControlled && !isControlled)),
+      `Warning: ${componentName} is changing from ${initialStateName} to ${endStateName}. Check the prop '${propName}'`,
+    )
+    return () => {}
+  }, [componentName, isControlled, propName, wasControlled])
+}
+
 function useToggle({
   initialOn = false,
   reducer = toggleReducer,
@@ -42,8 +59,12 @@ function useToggle({
   const on = isControlled ? controlledOn : state.on
   // use this bool or a useCallback so that the useEffect doesn't get called every render
   const hasOnChange = Boolean(onChange)
-  // we only care about the initial value, no need to set the value again
-  const {current: wasControlled} = React.useRef(isControlled)
+
+  useControlledSwitchWarning({
+    isControlled,
+    componentName: 'useToggle',
+    propName: 'on',
+  })
 
   React.useEffect(() => {
     warning(
@@ -51,18 +72,6 @@ function useToggle({
       'Warning: Failed prop type: You provided a `on` prop to a form field without an `onChange` handler. This will render a read-only field. If the field should be mutable use `defaultValue`. Otherwise, set either `onChange` or `readOnly`.',
     )
   }, [hasOnChange, isControlled, readOnly])
-
-  // 2. Passing a value for `on` and later passing `undefined` or `null`
-  // 3. Passing `undefined` or `null` for `on` and later passing a value
-  React.useEffect(() => {
-    const initialStateName = wasControlled ? 'controlled' : 'uncontrolled'
-    const endStateName = wasControlled ? 'uncontrolled' : 'controlled'
-    warning(
-      !((!wasControlled && isControlled) || (wasControlled && !isControlled)),
-      `Warning: A component is changing a ${initialStateName} input of type undefined to be ${endStateName}. Input elements should not switch from ${initialStateName} to ${endStateName} (or vice versa). Decide between using a ${initialStateName} or ${endStateName} input element for the lifetime of the component. More info: https://fb.me/react-controlled-components`,
-    )
-    return () => {}
-  }, [isControlled, wasControlled])
 
   function dispatchWithOnChange(action) {
     if (!isControlled) {
