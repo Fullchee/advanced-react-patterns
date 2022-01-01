@@ -3,6 +3,7 @@
 
 import * as React from 'react'
 import {Switch} from '../switch'
+import warning from 'warning'
 
 const callAll =
   (...fns) =>
@@ -33,12 +34,30 @@ function useToggle({
   reducer = toggleReducer,
   onChange,
   on: controlledOn,
-  // 💰 you can alias it to `controlledOn` to avoid "variable shadowing."
+  readOnly = false,
 } = {}) {
   const {current: initialState} = React.useRef({on: initialOn})
   const [state, dispatch] = React.useReducer(reducer, initialState)
   const isControlled = controlledOn != null
   const on = isControlled ? controlledOn : state.on
+  const onOldValueRef = React.useRef()
+  // use this bool or a useCallback so that the useEffect doesn't get called every render
+  const hasOnChange = Boolean(onChange)
+
+  React.useEffect(() => {
+    warning(
+      !(!hasOnChange && isControlled && !readOnly),
+      'On was provided a value but there is no onChange',
+    )
+    return () => {}
+  }, [hasOnChange, isControlled, readOnly])
+
+  // 2. Passing a value for `on` and later passing `undefined` or `null`
+  // 3. Passing `undefined` or `null` for `on` and later passing a value
+  // React.useEffect(() => {
+  //   warning()
+  //   return () => {}
+  // }, [on])
 
   function dispatchWithOnChange(action) {
     if (!isControlled) {
@@ -75,8 +94,12 @@ function useToggle({
   }
 }
 
-function Toggle({on: controlledOn, onChange}) {
-  const {on, getTogglerProps} = useToggle({on: controlledOn, onChange})
+function Toggle({on: controlledOn, onChange, readOnly}) {
+  const {on, getTogglerProps} = useToggle({
+    on: controlledOn,
+    onChange,
+    readOnly,
+  })
   const props = getTogglerProps({on})
   return <Switch {...props} />
 }
@@ -101,8 +124,8 @@ function App() {
   return (
     <div>
       <div>
-        <Toggle on={bothOn} onChange={handleToggleChange} />
-        <Toggle on={bothOn} onChange={handleToggleChange} />
+        <Toggle on={bothOn} readOnly={true} />
+        {/* <Toggle on={bothOn} onChange={handleToggleChange} /> */}
       </div>
       {timesClicked > 4 ? (
         <div data-testid="notice">
