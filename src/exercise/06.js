@@ -46,6 +46,16 @@ function useControlledSwitchWarning({isControlled, componentName, propName}) {
   }, [componentName, isControlled, propName, wasControlled])
 }
 
+function useReadOnlyWarning({onChange, readOnly, isControlled}) {
+  const hasOnChange = Boolean(onChange)
+  React.useEffect(() => {
+    warning(
+      !(!hasOnChange && isControlled && !readOnly),
+      'Warning: Failed prop type: You provided a `on` prop to a form field without an `onChange` handler. This will render a read-only field. If the field should be mutable use `defaultValue`. Otherwise, set either `onChange` or `readOnly`.',
+    )
+  }, [hasOnChange, isControlled, readOnly])
+}
+
 function useToggle({
   initialOn = false,
   reducer = toggleReducer,
@@ -58,20 +68,13 @@ function useToggle({
   const isControlled = controlledOn != null
   const on = isControlled ? controlledOn : state.on
   // use this bool or a useCallback so that the useEffect doesn't get called every render
-  const hasOnChange = Boolean(onChange)
 
   useControlledSwitchWarning({
     isControlled,
     componentName: 'useToggle',
     propName: 'on',
   })
-
-  React.useEffect(() => {
-    warning(
-      !(!hasOnChange && isControlled && !readOnly),
-      'Warning: Failed prop type: You provided a `on` prop to a form field without an `onChange` handler. This will render a read-only field. If the field should be mutable use `defaultValue`. Otherwise, set either `onChange` or `readOnly`.',
-    )
-  }, [hasOnChange, isControlled, readOnly])
+  useReadOnlyWarning({onChange, readOnly, isControlled})
 
   function dispatchWithOnChange(action) {
     if (!isControlled) {
