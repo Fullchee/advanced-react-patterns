@@ -1,47 +1,49 @@
 // Compound Components
 // http://localhost:3000/isolated/exercise/02.js
 
+// Starter code
+// https://github.com/kentcdodds/advanced-react-patterns/blob/main/src/exercise/02.js
+
 import * as React from 'react'
 import {Switch} from '../switch'
+
+// the children we can pass to `<Toggle>`
+const ToggleOn = ({on, children}) => on && children
+const ToggleOff = ({on, children}) => !on && children
+const ToggleButton = ({on, toggle}) => <Switch on={on} onClick={toggle} />
+const ALLOWED_CHILDREN = [ToggleOn, ToggleOff, ToggleButton]
 
 function Toggle({children}) {
   const [on, setOn] = React.useState(false)
   const toggle = () => setOn(!on)
-
   return React.Children.map(children, (child, index) => {
+    if (!ALLOWED_CHILDREN.includes(child.type)) {
+      return child
+    }
+
+    // // if you just want to ignore DOM elements
+    // if (typeof child.type === 'string') {
+    //   return child
+    // }
+
+    // need to use React.cloneElement
+    // React doesn't let us directly edit child.props
     return React.cloneElement(child, {
       id: `i-am-child-${index}`,
       on,
       toggle,
     })
   })
-
-  // 🐨 replace this with a call to React.Children.map and map each child in
-  // props.children to a clone of that child with the props they need using
-  // React.cloneElement.
-  // 💰 React.Children.map(props.children, child => {/* return child clone here */})
-  // 📜 https://reactjs.org/docs/react-api.html#reactchildren
-  // 📜 https://reactjs.org/docs/react-api.html#cloneelement
 }
-
-// 🐨 Flesh out each of these components
-
-// Accepts `on` and `children` props and returns `children` if `on` is true
-const ToggleOn = ({on, children}) => on && children
-
-// Accepts `on` and `children` props and returns `children` if `on` is false
-const ToggleOff = ({on, children}) => !on && children
-
-// Accepts `on` and `toggle` props and returns the <Switch /> with those props.
-const ToggleButton = ({on, toggle}) => <Switch on={on} onClick={toggle} />
 
 function App() {
   return (
     <div>
       <Toggle>
         <ToggleOn>The button is on</ToggleOn>
-        <ToggleButton />
         <ToggleOff>The button is off</ToggleOff>
+        <ToggleButton />
+        <span>Hello</span>
       </Toggle>
     </div>
   )
